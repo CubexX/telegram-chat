@@ -10,12 +10,13 @@ def main():
     # job_queue = updater.job_queue
     # job_queue.put(sendNewVideo, CHECK_INTERVAL, repeat=True)
 
-    dp.addTelegramCommandHandler("test", handlers.test)
+    dp.addTelegramCommandHandler('test', handlers.test)
 
-    dp.addTelegramCommandHandler("start", handlers.start)
-    dp.addTelegramCommandHandler("help", handlers.help)
-    dp.addTelegramCommandHandler("me", handlers.profile)
+    dp.addTelegramCommandHandler('start', handlers.start)
+    dp.addTelegramCommandHandler('help', handlers.help)
+    dp.addTelegramCommandHandler('me', handlers.profile)
     dp.addTelegramCommandHandler('menu', handlers.menu)
+    dp.addTelegramCommandHandler('inventory', handlers.inventory)
 
     dp.addTelegramMessageHandler(handlers.msg)
 

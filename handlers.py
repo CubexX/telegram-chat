@@ -2,6 +2,7 @@ from datetime import datetime
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardHide
 from config import *
 from models import User, Room
+from utils import getUser, getInventory
 
 default_keyboard = [
     ['[Мой профиль]'],
@@ -13,11 +14,10 @@ default_keyboard = [
 def start(bot, update):
     user_id = update.message.from_user.id
     user_name = update.message.from_user.username
-    user = db.query(User).filter(User.user_id == user_id).all()
-
+    user = getUser(user_id)
     reply_markup = ReplyKeyboardMarkup(default_keyboard)
 
-    if len(user) == 1:
+    if user:
         msg = 'С возвращением, %s\nПомощь - /help' % user_name
     else:
         db.add(User(user_id, user_name))
@@ -43,17 +43,24 @@ def profile(bot, update):
     room = _user[1]
     user = _user[0]
 
-    msg = 'Ник: @%s\nID: %s\nКомната: %s (%s)\nДеньги: %s$' % (user.user_name,
-                                                               user_id,
-                                                               room.title,
-                                                               user.current_room,
-                                                               user.money)
+    msg = 'Ник: @{}\n' \
+          'HP: {}\n' \
+          'ID: {}\n' \
+          'Комната: {} ({})\n' \
+          'Деньги: {}$\n\n' \
+          'Инвентарь - /inventory'.format(user.user_name,
+                                                                           user.hp,
+                                                                           user_id,
+                                                                           room.title,
+                                                                           user.current_room,
+                                                                           user.money)
     bot.sendMessage(update.message.chat_id,
                     text=msg)
 
 
-def inventory(bot, update):  # TODO
-    pass
+def inventory(bot, update):
+    bot.sendMessage(chat_id=update.message.chat_id,
+                    text=str(getInventory(update.message.from_user.id)))
 
 
 def shop(bot, update):  # TODO
@@ -75,7 +82,7 @@ def msg(bot, update):
     if text == "[Мой профиль]":
         profile(bot, update)
     elif text == "[Инвентарь]":
-        pass
+        inventory(bot, update)
     elif text == "[Магазин]":
         pass
     elif text == "[Скрыть]":
@@ -88,7 +95,7 @@ def echo(bot, update):
     user_id = update.message.from_user.id
     user_name = update.message.from_user.username
 
-    current_user = db.query(User).filter(User.user_id == user_id).all()[0]
+    current_user = getUser(user_id)
 
     q = db.query(User).filter(User.user_id != user_id, User.current_room == current_user.current_room).all()
 

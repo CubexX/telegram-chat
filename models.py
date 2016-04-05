@@ -16,17 +16,23 @@ class User(Base):
     id = Column('id', Integer, primary_key=True)
     user_id = Column('user_id', Integer)
     user_name = Column('user_name', String)
+    hp = Column('hp', Integer, default=100)
     current_room = Column('current_room', ForeignKey('rooms.id'), default=ROOM_DEFAULT_ID)
     money = Column('money', Integer, default=DEFAULT_MONEY)
 
-    def __init__(self, user_id, user_name, current_room=ROOM_DEFAULT_ID, money=DEFAULT_MONEY):
+    def __init__(self, user_id, user_name, hp, current_room=ROOM_DEFAULT_ID, money=DEFAULT_MONEY):
         self.user_id = user_id
         self.user_name = user_name
+        self.hp = hp
         self.current_room = current_room
         self.money = money
 
     def __repr__(self):
-        return "<User('%s','%s','%s','%s')>" % (self.user_id, self.user_name, self.current_room, self.money)
+        return "<User('{}','{}','{}','{}','{}')>".format(self.user_id,
+                                                         self.user_name,
+                                                         self.hp,
+                                                         self.current_room,
+                                                         self.money)
 
 
 class Room(Base):
@@ -43,7 +49,66 @@ class Room(Base):
         self.password = password
 
     def __repr__(self):
-        return "<Room('%s','%s','%s')>" % (self.title, self.owner, self.password)
+        return "<Room('{}','{}','{}')>".format(self.title,
+                                               self.owner,
+                                               self.password)
+
+
+class Inventory(Base):
+    __tablename__ = 'inventory'
+
+    id = Column('id', Integer, primary_key=True)
+    user_id = Column('user_id', ForeignKey('users.user_id'))
+    gun = Column('gun', ForeignKey('items.id'))
+    armor = Column('armor', ForeignKey('items.id'))
+    house = Column('house', ForeignKey('items.id'))
+    clothes = Column('clothes', ForeignKey('items.id'))
+    business = Column('business', ForeignKey('items.id'))
+    animal = Column('animal', ForeignKey('items.id'))
+
+    def __init__(self, id, user_id, gun, armor, house, clothes, business, animal):
+        self.id = id
+        self.user_id = user_id
+        self.gun = gun
+        self.armor = armor
+        self.house = house
+        self.clothes = clothes
+        self.business = business
+        self.animal = animal
+
+    def __repr__(self):
+        return "<Inventory('{}','{}','{}','{}','{}','{}','{}','{}')>".format(self.id,
+                                                                             self.user_id,
+                                                                             self.gun,
+                                                                             self.armor,
+                                                                             self.house,
+                                                                             self.clothes,
+                                                                             self.business,
+                                                                             self.animal)
+
+
+class Item(Base):
+    __tablename__ = 'items'
+
+    id = Column('id', Integer, primary_key=True)
+    title = Column('title', String)
+    cost = Column('cost', String)
+    type = Column('type', String)
+    value = Column('value', Integer)
+
+    def __init__(self, id, title, cost, type, value):
+        self.id = id
+        self.title = title
+        self.cost = cost
+        self.type = type
+        self.value = value
+
+    def __repr__(self):
+        return "<Item('{}','{}','{}','{}','{}')>".format(self.id,
+                                                         self.title,
+                                                         self.cost,
+                                                         self.type,
+                                                         self.value)
 
 
 engine = create_engine(DATABASE, echo=False)
