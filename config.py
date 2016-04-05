@@ -8,7 +8,8 @@ TOKEN = 'XXXXXXXXXXXXXXXXXXXX'
 
 HELP_TEXT = ['/me - Информация о вас',
              '/menu - Открыть меню',
-             '/inventory - Инвентарь']
+             '/inventory - Инвентарь',
+             '/room [комната] - Смена комнаты']
 
 logging.basicConfig(
     format='[%(asctime)s][%(name)s][%(levelname)s] - %(message)s',

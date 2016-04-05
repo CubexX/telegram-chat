@@ -17,6 +17,7 @@ def main():
     dp.addTelegramCommandHandler('me', handlers.profile)
     dp.addTelegramCommandHandler('menu', handlers.menu)
     dp.addTelegramCommandHandler('inventory', handlers.inventory)
+    dp.addTelegramCommandHandler('room', handlers.room)
 
     dp.addTelegramMessageHandler(handlers.msg)
 

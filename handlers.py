@@ -2,7 +2,7 @@ from datetime import datetime
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardHide
 from config import *
 from models import User, Room
-from utils import getUser, getInventory
+from utils import getUser, getInventory, changeRoom, getRoom
 
 default_keyboard = [
     ['[Мой профиль]'],
@@ -49,11 +49,11 @@ def profile(bot, update):
           'Комната: {} ({})\n' \
           'Деньги: {}$\n\n' \
           'Инвентарь - /inventory'.format(user.user_name,
-                                                                           user.hp,
-                                                                           user_id,
-                                                                           room.title,
-                                                                           user.current_room,
-                                                                           user.money)
+                                          user.hp,
+                                          user_id,
+                                          room.title,
+                                          user.current_room,
+                                          user.money)
     bot.sendMessage(update.message.chat_id,
                     text=msg)
 
@@ -71,6 +71,19 @@ def hide(bot, update):
     reply_markup = ReplyKeyboardHide()
     bot.sendMessage(chat_id=update.message.chat_id,
                     text="Меню скрыто. /menu чтобы открыть", reply_markup=reply_markup)
+
+def room(bot, update):
+    text = update.message.text
+    user_id = update.message.from_user.id
+    r = str(text).split(' ')
+
+    if len(r) == 2 and r[1].isdigit():
+        msg = 'Вы перешли в комнату {} ({})'.format(getRoom(r[1]).title, r[1])
+        changeRoom(user_id, r[1])
+    else:
+        msg = 'Используйте /room [комната]'
+    bot.sendMessage(chat_id=update.message.chat_id,
+                    text=msg)
 
 
 # \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

@@ -1,5 +1,5 @@
 from config import *
-from models import User, Inventory, Item
+from models import User, Inventory, Item, Room
 
 
 def getUser(user_id):
@@ -50,3 +50,23 @@ def getItem(id):
             return '{0} ({1})'.format(q[0].title, q[0].value)
         else:
             return "Нет"
+
+def getRoom(id):
+    cached = cache.get('room_%s' % id)
+    if cached:
+        logger.info('Sent from cache room_%s' % id)
+        return cached[0]
+    else:
+        q = db.query(Room).filter(Room.id == id).all()
+        cache.set('room_%s' % id, q)
+        logger.info('Added to cache room_%s' % id)
+        return q[0]
+
+def changeRoom(user_id, room_id):
+    r = db.query(Room).filter(Room.id == room_id).all()
+    if r:
+        user = db.query(User).filter(User.user_id == user_id)
+        user.update({'current_room': room_id})
+        db.commit()
+        cache.set('user_%s' % user_id, user.all()[0])
+        logger.info('Cache updated user_%s' % user_id)
