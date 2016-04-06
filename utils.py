@@ -1,5 +1,6 @@
 from config import *
 from models import User, Inventory, Item, Room
+from re import sub
 
 
 def getUser(user_id):
@@ -70,3 +71,28 @@ def changeRoom(user_id, room_id):
         db.commit()
         cache.set('user_%s' % user_id, user.all()[0])
         logger.info('Cache updated user_%s' % user_id)
+
+def getProfile(user_id=None, user_name=None):
+    if user_name:
+        user_name = sub('@', '', user_name)
+        query = db.query(User, Room).filter(User.user_name == user_name, User.current_room == Room.id).all()[0]
+        logger.info('Sent from database user_%s' % user_name)
+    else:
+        query = db.query(User, Room).filter(User.user_id == user_id, User.current_room == Room.id).all()[0]
+        logger.info('Sent from database user_%s' % user_id)
+
+    room = query[1]
+    user = query[0]
+
+    msg = 'Ник: @{}\n' \
+          'HP: {}\n' \
+          'ID: {}\n' \
+          'Комната: {} ({})\n' \
+          'Деньги: {}$\n\n' \
+          'Инвентарь - /inventory'.format(user.user_name,
+                                          user.hp,
+                                          user.user_id,
+                                          room.title,
+                                          user.current_room,
+                                          user.money)
+    return msg

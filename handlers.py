@@ -1,8 +1,8 @@
 from datetime import datetime
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardHide
 from config import *
-from models import User, Room
-from utils import getUser, getInventory, changeRoom, getRoom
+from models import User
+from utils import getUser, getInventory, changeRoom, getRoom, getProfile
 
 default_keyboard = [
     ['[Мой профиль]'],
@@ -22,6 +22,8 @@ def start(bot, update):
     else:
         db.add(User(user_id, user_name))
         db.commit()
+        logger.info('User {}({}) added bot'.format(user_name, user_id))
+
         msg = 'Добро пожаловать в ChatRoo!\nПомощь - /help'
 
     bot.sendMessage(chat_id=update.message.chat_id, text=msg, reply_markup=reply_markup)
@@ -39,23 +41,9 @@ def menu(bot, update):
 
 def profile(bot, update):
     user_id = update.message.from_user.id
-    _user = db.query(User, Room).filter(User.user_id == user_id, User.current_room == Room.id).all()[0]
-    room = _user[1]
-    user = _user[0]
 
-    msg = 'Ник: @{}\n' \
-          'HP: {}\n' \
-          'ID: {}\n' \
-          'Комната: {} ({})\n' \
-          'Деньги: {}$\n\n' \
-          'Инвентарь - /inventory'.format(user.user_name,
-                                          user.hp,
-                                          user_id,
-                                          room.title,
-                                          user.current_room,
-                                          user.money)
     bot.sendMessage(update.message.chat_id,
-                    text=msg)
+                    text=getProfile(user_id=user_id))
 
 
 def inventory(bot, update):
@@ -72,16 +60,30 @@ def hide(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id,
                     text="Меню скрыто. /menu чтобы открыть", reply_markup=reply_markup)
 
+
 def room(bot, update):
-    text = update.message.text
     user_id = update.message.from_user.id
-    r = str(text).split(' ')
+    r = str(update.message.text).split(' ')
 
     if len(r) == 2 and r[1].isdigit():
         msg = 'Вы перешли в комнату {} ({})'.format(getRoom(r[1]).title, r[1])
         changeRoom(user_id, r[1])
     else:
         msg = 'Используйте /room [комната]'
+    bot.sendMessage(chat_id=update.message.chat_id,
+                    text=msg)
+
+
+def info(bot, update):
+    user_id = update.message.from_user.id
+    r = str(update.message.text).split(' ')
+
+    if len(r) == 2 and r[1].isdigit():
+        msg = getProfile(user_id=r[1])
+    elif len(r) == 2:
+        msg = getProfile(user_name=r[1])
+    else:
+        msg = getProfile(user_id=user_id)
     bot.sendMessage(chat_id=update.message.chat_id,
                     text=msg)
 

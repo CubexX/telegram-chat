@@ -59,6 +59,7 @@ class Inventory(Base):
 
     id = Column('id', Integer, primary_key=True)
     user_id = Column('user_id', ForeignKey('users.user_id'))
+
     gun = Column('gun', ForeignKey('items.id'))
     armor = Column('armor', ForeignKey('items.id'))
     house = Column('house', ForeignKey('items.id'))
@@ -66,7 +67,15 @@ class Inventory(Base):
     business = Column('business', ForeignKey('items.id'))
     animal = Column('animal', ForeignKey('items.id'))
 
-    def __init__(self, id, user_id, gun, armor, house, clothes, business, animal):
+    gun_value = Column('gun_value', Integer)
+    armor_value = Column('armor_value', Integer)
+    house_value = Column('house_value', Integer)
+    clothes_value = Column('clothes_value', Integer)
+    business_value = Column('business_value', Integer)
+    animal_value = Column('animal_value', Integer)
+
+    def __init__(self, id, user_id, gun, armor, house, clothes, business, animal, gun_value=None, armor_value=None,
+                 house_value=None, clothes_value=None, business_value=None, animal_value=None):
         self.id = id
         self.user_id = user_id
         self.gun = gun
@@ -76,15 +85,30 @@ class Inventory(Base):
         self.business = business
         self.animal = animal
 
+        self.gun_value = gun_value
+        self.armor_value = armor_value
+        self.house_value = house_value
+        self.clothes_value = clothes_value
+        self.business_value = business_value
+        self.animal_value = animal_value
+
     def __repr__(self):
-        return "<Inventory('{}','{}','{}','{}','{}','{}','{}','{}')>".format(self.id,
-                                                                             self.user_id,
-                                                                             self.gun,
-                                                                             self.armor,
-                                                                             self.house,
-                                                                             self.clothes,
-                                                                             self.business,
-                                                                             self.animal)
+        return "<Inventory('{}','{}','{}','{}','{}','{}','{}','{}')" \
+               "('{}','{}','{}','{}','{}','{}')>".format(self.id,
+                                                         self.user_id,
+                                                         self.gun,
+                                                         self.armor,
+                                                         self.house,
+                                                         self.clothes,
+                                                         self.business,
+                                                         self.animal,
+                                                         self.gun_value,
+                                                         self.armor_value,
+                                                         self.house_value,
+                                                         self.clothes_value,
+                                                         self.business_value,
+                                                         self.animal_value
+                                                         )
 
 
 class Item(Base):

@@ -18,10 +18,10 @@ def main():
     dp.addTelegramCommandHandler('menu', handlers.menu)
     dp.addTelegramCommandHandler('inventory', handlers.inventory)
     dp.addTelegramCommandHandler('room', handlers.room)
+    dp.addTelegramCommandHandler('info', handlers.info)
 
     dp.addTelegramMessageHandler(handlers.msg)
 
-    # dp.addTelegramMessageHandler(handlers.echo)
     dp.addErrorHandler(handlers.error)
 
     updater.start_polling()
