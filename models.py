@@ -135,7 +135,7 @@ class Item(Base):
                                                          self.value)
 
 
-engine = create_engine(DATABASE, echo=False)
+engine = create_engine(DATABASE, echo=False, connect_args={'check_same_thread': False})
 Base.metadata.create_all(engine)
 
 Session = sessionmaker(bind=engine)
