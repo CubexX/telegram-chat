@@ -7,8 +7,9 @@ def main():
     updater = Updater(TOKEN)
     dp = updater.dispatcher
 
-    # job_queue = updater.job_queue
-    # job_queue.put(sendNewVideo, CHECK_INTERVAL, repeat=True)
+    # Business payment
+    job_queue = updater.job_queue
+    job_queue.put(handlers.business_pay, BUSINESS_PAY_INTERVAL, repeat=True)
 
     dp.addTelegramCommandHandler('test', handlers.test)
 

@@ -15,6 +15,14 @@ def getUser(user_id):
         return q
 
 
+def updateUser(user_id, update):
+    user = db.query(User).filter(User.user_id == user_id)
+    user.update(update)
+    db.commit()
+    cache.set('user_%s' % user_id, user.all()[0])
+    logger.info('Cache updated user_%s' % user_id)
+
+
 def getInventory(user_id):
     inv = db.query(Inventory).filter(Inventory.user_id == user_id).all()[0]
     gun = getItem(inv.gun)
@@ -38,19 +46,28 @@ def getInventory(user_id):
     return msg
 
 
-def getItem(id):
+def getItem(id, model=None):
     cached = cache.get('item_%s' % id)
+    res = None
+
     if cached:
         logger.info('Sent from cache item_%s' % id)
-        return '{0} ({1})'.format(cached[0].title, cached[0].value)
+        res = '{0} ({1})'.format(cached[0].title, cached[0].value)
+        if model:
+            res = cached[0]
     else:
         q = db.query(Item).filter(Item.id == id).all()
         if q:
             cache.set('item_%s' % id, q)
             logger.info('Added to cache item_%s' % id)
-            return '{0} ({1})'.format(q[0].title, q[0].value)
+            res = '{0} ({1})'.format(q[0].title, q[0].value)
+            if model:
+                res = q[0]
         else:
-            return "Нет"
+            res = 'Нет'
+
+    return res
+
 
 def getRoom(id):
     cached = cache.get('room_%s' % id)
@@ -63,14 +80,12 @@ def getRoom(id):
         logger.info('Added to cache room_%s' % id)
         return q[0]
 
+
 def changeRoom(user_id, room_id):
     r = db.query(Room).filter(Room.id == room_id).all()
     if r:
-        user = db.query(User).filter(User.user_id == user_id)
-        user.update({'current_room': room_id})
-        db.commit()
-        cache.set('user_%s' % user_id, user.all()[0])
-        logger.info('Cache updated user_%s' % user_id)
+        updateUser(user_id, {'current_room': room_id})
+
 
 def getProfile(user_id=None, user_name=None):
     if user_name:

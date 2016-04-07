@@ -1,8 +1,6 @@
 from datetime import datetime
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardHide
-from config import *
-from models import User
-from utils import getUser, getInventory, changeRoom, getRoom, getProfile
+from utils import *
 
 default_keyboard = [
     ['[Мой профиль]'],
@@ -15,6 +13,8 @@ def start(bot, update):
     user_id = update.message.from_user.id
     user_name = update.message.from_user.username
     user = getUser(user_id)
+
+    # Creating menu keyboard
     reply_markup = ReplyKeyboardMarkup(default_keyboard)
 
     if user:
@@ -78,6 +78,7 @@ def info(bot, update):
     user_id = update.message.from_user.id
     r = str(update.message.text).split(' ')
 
+    # Checking second argument (user ID)
     if len(r) == 2 and r[1].isdigit():
         msg = getProfile(user_id=r[1])
     elif len(r) == 2:
@@ -127,5 +128,19 @@ def error(update, err):
 
 
 def test(bot, update):
+    # For debugging
     bot.sendMessage(update.message.chat_id,
                     text=str(update.message.from_user))
+
+
+def business_pay(bot):
+    q = db.query(Inventory).filter(Inventory.business != None).all()
+
+    for inv in q:
+        item = getItem(inv.business, True)
+        money = getUser(inv.user_id).money
+
+        updateUser(inv.user_id, {'money': money + item.value})
+        logger.info("Money added to user {}".format(inv.user_id))
+
+        bot.sendMessage(inv.user_id, "Вам было начислено {}$ за ваш бизнес".format(item.value))
