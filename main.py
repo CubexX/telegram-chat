@@ -1,5 +1,5 @@
 from telegram.ext import Updater
-from config import *
+from config import TOKEN, BUSINESS_PAY_INTERVAL
 import handlers
 
 
