@@ -1,5 +1,4 @@
 import logging
-from models import session
 import memcache
 
 cache = memcache.Client(['127.0.0.1:11211'], debug=1)
@@ -19,4 +18,3 @@ logging.basicConfig(
     # filename='bot.log'
 )
 logger = logging.getLogger(__name__)
-db = session
