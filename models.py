@@ -1,8 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, create_engine, ForeignKey
 from sqlalchemy.orm import sessionmaker
-from config import cache, logger
-from re import sub
 
 Base = declarative_base()
 
@@ -22,7 +20,7 @@ class User(Base):
     current_room = Column('current_room', ForeignKey('rooms.id'), default=ROOM_DEFAULT_ID)
     money = Column('money', Integer, default=DEFAULT_MONEY)
 
-    def __init__(self, user_id=None, user_name=None, hp=None, current_room=ROOM_DEFAULT_ID, money=DEFAULT_MONEY):
+    def __init__(self, user_id, user_name, hp, current_room=ROOM_DEFAULT_ID, money=DEFAULT_MONEY):
         self.user_id = user_id
         self.user_name = user_name
         self.hp = hp
@@ -36,49 +34,6 @@ class User(Base):
                                                          self.current_room,
                                                          self.money)
 
-    def get(self):
-        cached = cache.get('user_%s' % self.user_id)
-        if cached:
-            logger.info('Sent from cache user_%s' % self.user_id)
-            return cached
-        else:
-            q = db.query(User).filter(User.user_id == self.user_id).all()[0]
-            cache.set('user_%s' % self.user_id, q)
-            logger.info('Added to cache user_%s' % self.user_id)
-            return q
-
-    def update(self, update):
-        user = db.query(User).filter(User.user_id == self.user_id)
-        user.update(update)
-        db.commit()
-        cache.set('user_%s' % self.user_id, user.all()[0])
-        logger.info('Cache updated user_%s' % self.user_id)
-
-    def profile(self):
-        if self.user_name:
-            self.user_name = sub('@', '', self.user_name)
-            query = db.query(User, Room).filter(User.user_name == self.user_name, User.current_room == Room.id).all()[0]
-            logger.info('Sent from database user_%s' % self.user_name)
-        else:
-            query = db.query(User, Room).filter(User.user_id == self.user_id, User.current_room == Room.id).all()[0]
-            logger.info('Sent from database user_%s' % self.user_id)
-
-        room = query[1]
-        user = query[0]
-
-        msg = 'Ник: @{}\n' \
-              'HP: {}\n' \
-              'ID: {}\n' \
-              'Комната: {} ({})\n' \
-              'Деньги: {}$\n\n' \
-              'Инвентарь - /inventory'.format(user.user_name,
-                                              user.hp,
-                                              user.user_id,
-                                              room.title,
-                                              user.current_room,
-                                              user.money)
-        return msg
-
 
 class Room(Base):
     __tablename__ = 'rooms'
@@ -88,33 +43,15 @@ class Room(Base):
     owner = Column('owner', ForeignKey('users.id'), default=ROOM_OWNER_DEFAULT_ID)
     password = Column('password', String, default=None)
 
-    def __init__(self, id=None, title=None, owner=ROOM_OWNER_DEFAULT_ID, password=None):
-        self.id = id
+    def __init__(self, title, owner=ROOM_OWNER_DEFAULT_ID, password=None):
         self.title = title
         self.owner = owner
         self.password = password
 
     def __repr__(self):
-        return "<Room('{}','{}','{}','{}')>".format(self.id,
-                                                    self.title,
-                                                    self.owner,
-                                                    self.password)
-
-    def get(self):
-        cached = cache.get('room_%s' % self.id)
-        if cached:
-            logger.info('Sent from cache room_%s' % self.id)
-            return cached[0]
-        else:
-            q = db.query(Room).filter(Room.id == self.id).all()
-            cache.set('room_%s' % self.id, q)
-            logger.info('Added to cache room_%s' % self.id)
-            return q[0]
-
-    def change(self, user_id):
-        r = db.query(Room).filter(Room.id == self.id).all()
-        if r:
-            User(user_id=user_id).update({'current_room': self.id})
+        return "<Room('{}','{}','{}')>".format(self.title,
+                                               self.owner,
+                                               self.password)
 
 
 class Inventory(Base):
@@ -137,8 +74,7 @@ class Inventory(Base):
     business_value = Column('business_value', Integer)
     animal_value = Column('animal_value', Integer)
 
-    def __init__(self, id=None, user_id=None, gun=None, armor=None, house=None,
-                 clothes=None, business=None, animal=None, gun_value=None, armor_value=None,
+    def __init__(self, id, user_id, gun, armor, house, clothes, business, animal, gun_value=None, armor_value=None,
                  house_value=None, clothes_value=None, business_value=None, animal_value=None):
         self.id = id
         self.user_id = user_id
@@ -174,28 +110,6 @@ class Inventory(Base):
                                                          self.animal_value
                                                          )
 
-    def get(self):
-        inv = db.query(Inventory).filter(Inventory.user_id == self.user_id).all()[0]
-        gun = Item(inv.gun).get()
-        armor = Item(inv.armor).get()
-        house = Item(inv.house).get()
-        clothes = Item(inv.clothes).get()
-        business = Item(inv.business).get()
-        animal = Item(inv.animal).get()
-
-        msg = 'Оружие - {}\n' \
-              'Броня - {}\n' \
-              'Дом - {}\n' \
-              'Одежда - {}\n' \
-              'Бизнес - {}\n' \
-              'Питомец - {}'.format(gun,
-                                    armor,
-                                    house,
-                                    clothes,
-                                    business,
-                                    animal)
-        return msg
-
 
 class Item(Base):
     __tablename__ = 'items'
@@ -206,7 +120,7 @@ class Item(Base):
     type = Column('type', String)
     value = Column('value', Integer)
 
-    def __init__(self, id=None, title=None, cost=None, type=None, value=None):
+    def __init__(self, id, title, cost, type, value):
         self.id = id
         self.title = title
         self.cost = cost
@@ -220,32 +134,9 @@ class Item(Base):
                                                          self.type,
                                                          self.value)
 
-    def get(self, model=None):
-        cached = cache.get('item_%s' % self.id)
-        res = None
-
-        if cached:
-            logger.info('Sent from cache item_%s' % self.id)
-            res = '{0} ({1})'.format(cached[0].title, cached[0].value)
-            if model:
-                res = cached[0]
-        else:
-            q = db.query(Item).filter(Item.id == self.id).all()
-            if q:
-                cache.set('item_%s' % self.id, q)
-                logger.info('Added to cache item_%s' % self.id)
-                res = '{0} ({1})'.format(q[0].title, q[0].value)
-                if model:
-                    res = q[0]
-            else:
-                res = 'Нет'
-
-        return res
-
 
 engine = create_engine(DATABASE, echo=False, connect_args={'check_same_thread': False})
 Base.metadata.create_all(engine)
 
 Session = sessionmaker(bind=engine)
 session = Session()
-db = session

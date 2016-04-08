@@ -1,7 +1,6 @@
 from datetime import datetime
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardHide
-from models import User, Item, Room, db, Inventory
-from config import logger, HELP_TEXT
+from utils import *
 
 default_keyboard = [
     ['[Мой профиль]'],
@@ -13,7 +12,7 @@ default_keyboard = [
 def start(bot, update):
     user_id = update.message.from_user.id
     user_name = update.message.from_user.username
-    user = User(user_id=user_id).get()
+    user = getUser(user_id)
 
     # Creating menu keyboard
     reply_markup = ReplyKeyboardMarkup(default_keyboard)
@@ -44,12 +43,12 @@ def profile(bot, update):
     user_id = update.message.from_user.id
 
     bot.sendMessage(update.message.chat_id,
-                    text=User(user_id=user_id).profile())
+                    text=getProfile(user_id=user_id))
 
 
 def inventory(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id,
-                    text=str(Inventory(user_id=update.message.from_user.id).get()))
+                    text=str(getInventory(update.message.from_user.id)))
 
 
 def shop(bot, update):  # TODO
@@ -67,8 +66,8 @@ def room(bot, update):
     r = str(update.message.text).split(' ')
 
     if len(r) == 2 and r[1].isdigit():
-        msg = 'Вы перешли в комнату {} ({})'.format(Room(r[1]).get().title, r[1])
-        Room(r[1]).change(user_id)
+        msg = 'Вы перешли в комнату {} ({})'.format(getRoom(r[1]).title, r[1])
+        changeRoom(user_id, r[1])
     else:
         msg = 'Используйте /room [комната]'
     bot.sendMessage(chat_id=update.message.chat_id,
@@ -81,11 +80,11 @@ def info(bot, update):
 
     # Checking second argument (user ID)
     if len(r) == 2 and r[1].isdigit():
-        msg = User(user_id=r[1]).profile()
+        msg = getProfile(user_id=r[1])
     elif len(r) == 2:
-        msg = User(user_name=r[1]).profile()
+        msg = getProfile(user_name=r[1])
     else:
-        msg = User(user_id=user_id).profile()
+        msg = getProfile(user_id=user_id)
     bot.sendMessage(chat_id=update.message.chat_id,
                     text=msg)
 
@@ -112,7 +111,7 @@ def echo(bot, update):
     user_id = update.message.from_user.id
     user_name = update.message.from_user.username
 
-    current_user = User(user_id=user_id).get()
+    current_user = getUser(user_id)
 
     q = db.query(User).filter(User.user_id != user_id, User.current_room == current_user.current_room).all()
 
@@ -138,10 +137,10 @@ def business_pay(bot):
     q = db.query(Inventory).filter(Inventory.business != None).all()
 
     for inv in q:
-        item = Item(inv.business).get(model=True)
-        money = User(user_id=inv.user_id).get()
+        item = getItem(inv.business, True)
+        money = getUser(inv.user_id).money
 
-        User(user_id=inv.user_id).update({'money': money + item.value})
+        updateUser(inv.user_id, {'money': money + item.value})
         logger.info("Money added to user {}".format(inv.user_id))
 
         bot.sendMessage(inv.user_id, "Вам было начислено {}$ за ваш бизнес".format(item.value))
